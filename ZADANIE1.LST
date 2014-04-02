@@ -1,0 +1,418 @@
+Turbo Assembler	 Version 3.2	    04/02/14 20:48:55	    Page 1
+zadanie1.asm
+
+
+
+      1				     ; Zadanie c.1
+      2				     ; Roman Roöt·r
+      3				     ;
+      4				     ; TEXT ZADANIA
+      5				     ;	     NapÌöte program (v	JSI), ktor˝ umoûnÌ pouûÌvatelovi pomocou menu nasleduj˙ce akcie:    +
+      6				     zadat meno	s˙boru,	vypÌsat	obsah s˙boru, vypÌsat dlûku s˙boru
+      7				     ;	     (v	desiatkovej s˙stave, v bajtoch), vykonat pridelen˙ ˙lohu, ukoncit program. Program  +
+      8				     nacÌta volbu pouûÌvatela z	kl·vesnice. Program sa musÌ ukoncit aj po stlacenÌ kl·vesu "ESCAPE".
+      9				     ;	     V programe	vhodne pouûite makro s parametrom, ako aj vhodnÈ volania OS (resp. BIOS) pre+
+     10				     nacÌtanie znaku, nastavenie kurzora, v˝pis	retazca, zmazanie obrazovky a pod. Na spracovanie   +
+     11				     pola
+     12				     ;	     znakov musia byt vhodne pouûitÈ retazcovÈ inötrukcie. Pridelen· ˙loha musÌ	byt	    +
+     13				     realizovan· ako extern· proced˙ra (kompilovan· samostatne a prilinkovan· k	v˝slednÈmu programu).
+     14				     ;	     DefinÌcie makier musia byt	v samostatnom s˙bore. Program musÌ korektne spracovat s˙bory+
+     15				     s dlûkou aspon do 128 kB. Pri cÌtanÌ vyuûite pole vhodnej velkosti	(buffer), pricom zo s˙boru do
+     16				     ;	     pam‰te sa bude pres˙vat vûdy (aû na poslednÈ cÌtanie) cel·	velkost	pola. Oöetrite	    +
+     17				     chybovÈ stavy.
+     18				     ;
+     19				     ; DOPLNKOVA ULOHA
+     20				     ; NaËÌtaù reùazec a vypÌsaù poËet jeho v˝skytov (ako podreùazca) v	s˙bore.
+     21				     ;PREKLAD:	       [cesta]\tasm /l/zi/c subor.asm
+     22				     ;LINKOVANIE:      [cesta]\tlink /l/i/v subor.obj
+     23				     ;POMOCNE PROGRAMY:[cesta]\thelp\help.exe, abshelp.exe
+     24				     ;		       [cesta]\tasm\thelp.com
+     25				     ;		       [cesta]\ng\ng.exe
+     26
+     27
+     28	0000			     ZAS   segment stack 'stack'								    +
+     29				     ;zaciatok zasobnikoveho segmentu
+     30	0000  40*(????)			   dw 64 dup(?)										    +
+     31				     ;definicia	64-och slov v pamati
+     32	0080			     ZAS   ENDS						       ;koniec zasobnikoveho segmentu
+     33
+     34	0000			     DATA    SEGMENT
+     35					 ;zaciatok datoveho segmentu
+     36
+     37					 ;misc
+     38	      =	13,10			 NEWL EQU 13,10
+     39	      =0009			 TAB EQU 9
+     40	0000  0D 0A 24			 NEWLINE   DB NEWL,'$'
+     41	0003  61 68 6F 6A 2E 74	78+	 TESTFILE  DB 'ahoj.txt',0,'$'
+     42	      74 00 24
+     43
+     44					 ;menu
+     45	000D  0D 0A 41 53 4D 20	5A+	 MENU	       DB NEWL,'ASM Zadanie 1. -- Autor: Roman Rostar (c)',NEWL,'MENU :',NEWL
+     46	      61 64 61 6E 69 65	20+
+     47	      31 2E 20 2D 2D 20	41+
+     48	      75 74 6F 72 3A 20	52+
+     49	      6F 6D 61 6E 20 52	6F+
+     50	      73 74 61 72 20 28	63+
+     51	      29 0D 0A 4D 45 4E	55+
+     52	      20 3A 0D 0A
+     53	0042  09 31 2E 20 4E 61	63+				 DB TAB,'1. Nacitat subor',NEWL
+     54	      69 74 61 74 20 73	75+
+     55	      62 6F 72 0D 0A
+     56	0055  09 32 2E 20 56 79	70+				       DB TAB,'2. Vypisat obsah	suboru',NEWL
+     57	      69 73 61 74 20 6F	62+
+Turbo Assembler	 Version 3.2	    04/02/14 20:48:55	    Page 2
+zadanie1.asm
+
+
+
+     58	      73 61 68 20 73 75	62+
+     59	      6F 72 75 0D 0A
+     60	006F  09 33 2E 20 5A 69	73+			       DB TAB,'3. Zistit pocet vyskytov	slova v	subore',NEWL
+     61	      74 69 74 20 70 6F	63+
+     62	      65 74 20 76 79 73	6B+
+     63	      79 74 6F 76 20 73	6C+
+     64	      6F 76 61 20 76 20	73+
+     65	      75 62 6F 72 65 0D	0A
+     66	0099  09 34 2E 20 5A 6D	61+			       DB TAB,'4. Zmazat obrazovku a vypisat menu',NEWL,'$'
+     67	      7A 61 74 20 6F 62	72+
+     68	      61 7A 6F 76 6B 75	20+
+     69	      61 20 76 79 70 69	73+
+     70	      61 74 20 6D 65 6E	75+
+     71	      0D 0A 24
+     72	00BF  09 5B 45 53 43 2C	45+		   DB TAB,'[ESC,ENTER pre vypnutie programu',NEWL,'$'
+     73	      4E 54 45 52 20 70	72+
+     74	      65 20 76 79 70 6E	75+
+     75	      74 69 65 20 70 72	6F+
+     76	      67 72 61 6D 75 0D	0A+
+     77	      24
+     78	00E3  4E 65 7A 6E 61 6D	79+	 UNKNWN	   DB 'Neznamy prikaz',NEWL,'$'
+     79	      20 70 72 69 6B 61	7A+
+     80	      0D 0A 24
+     81
+     82					 ;messages
+     83	00F4  53 74 6C 61 63 74	65+	 MSG_BACK  DB 'Stlacte ENTER pre navrat	do menu',NEWL,'$'
+     84	      20 45 4E 54 45 52	20+
+     85	      70 72 65 20 6E 61	76+
+     86	      72 61 74 20 64 6F	20+
+     87	      6D 65 6E 75 0D 0A	24
+     88	0117  0D 0A 53 74 6C 61	63+	 MSG_RETURN_ENTER	     DB	     NEWL,'Stlacte ENTER pre navrat do hlavneho	menu.$'
+     89	      74 65 20 45 4E 54	45+
+     90	      52 20 70 72 65 20	6E+
+     91	      61 76 72 61 74 20	64+
+     92	      6F 20 68 6C 61 76	6E+
+     93	      65 68 6F 20 6D 65	6E+
+     94	      75 2E 24
+     95	0144  5A 61 64 61 6A 74	65+	 MSG_FILE_NAME DB  'Zadajte meno suboru',NEWL,'$'
+     96	      20 6D 65 6E 6F 20	73+
+     97	      75 62 6F 72 75 0D	0A+
+     98	      24
+     99
+    100					 ;error	messages
+    101	015A  45 72 72 6F 72 3A	20+	 ERROR	   DB 'Error: Not yet implemented!',NEWL,'$'
+    102	      4E 6F 74 20 79 65	74+
+    103	      20 69 6D 70 6C 65	6D+
+    104	      65 6E 74 65 64 21	0D+
+    105	      0A 24
+    106	0178  4E 61 73 74 61 6C	61+	 ERROR_FL  DB 'Nastala chyba pri otvarani suboru',NEWL,'$'
+    107	      20 63 68 79 62 61	20+
+    108	      70 72 69 20 6F 74	76+
+    109	      61 72 61 6E 69 20	73+
+    110	      75 62 6F 72 75 0D	0A+
+    111	      24
+    112	019C  4E 61 6A 70 72 76	20+	 ERR_NO_HANDLE	DB 'Najprv nacitajte subor',NEWL,'$'
+    113	      6E 61 63 69 74 61	6A+
+    114	      74 65 20 73 75 62	6F+
+Turbo Assembler	 Version 3.2	    04/02/14 20:48:55	    Page 3
+zadanie1.asm
+
+
+
+    115	      72 0D 0A 24
+    116					 ;
+    117					 ;File handle suboru
+    118	01B5  0000			 HANDLE	   DW 0
+    119	01B7  64*(??)			 FILENAME  DB 100 dup (?)
+    120	021B  00			 FN_LEN	   DB 0
+    121	021C  64*(??)			 BUFFER	   DB 100 dup (?)
+    122	0280			     DATA ENDS
+    123
+    124				     include makra.asm
+1   125				       ;makro na vycistenie obrazovky aka clrscr
+1   126				       CLRSCR  macro
+1   127					       mov AX,3
+1   128					       int 10H
+1   129				       endm
+1   130
+1   131				       ;makro s	parametrom na vypis retazca
+1   132				       PRINT macro TEXT
+1   133					 mov ah,9
+1   134					 mov dx,offset TEXT
+1   135					 int 21h
+1   136				       endm
+    137
+    138	0000			     CODE SEGMENT
+    139				     ASSUME CS:CODE,DS:DATA,SS:ZAS  ;makro na vycistenie obrazovky aka clrscr
+    140
+    141	0000			       WAIT_FOR	proc
+    142	0000				 waiting:
+    143						     PRINT MSG_RETURN_ENTER
+1   144	0000  B4 09			 mov ah,9
+1   145	0002  BA 0117r			 mov dx,offset MSG_RETURN_ENTER
+1   146	0005  CD 21			 int 21h
+    147	0007  B4 08			   mov AH, 8	     ; nacitanie znaku
+    148	0009  CD 21					     int 21H
+    149	000B  3C 0D					     cmp AL, 13		     ;Porovnaj ci bol stlaceny enter
+    150	000D  E0 F1				     loopne waiting
+    151	000F  C3				     ret
+    152	0010				     endp
+    153
+    154	0010			       READNAME	proc
+    155					 ;PRINT	MSG_FILE_NAME
+    156	0010  BB 01B7r			 lea BX, FILENAME
+    157	0013				 reading:
+    158	0013  B4 01			   mov AH, 1	     ; nacitanie znaku
+    159	0015  CD 21					     int 21H
+    160	0017  3C 0D					     cmp AL, 13		     ;Porovnaj ci bol stlaceny enter
+    161	0019  74 09			   jz  return	 ;ak hej skoncili sme
+    162	001B  88 07			   mov [BX],AL	 ;
+    163	001D  43			   inc BX
+    164	001E  FE 06 021Br		   inc FN_LEN
+    165	0022  EB EF			   jmp reading
+    166	0024				 return:
+    167	0024  B0 24			   mov AL,'$'
+    168	0026  88 07			   mov [BX],AL
+    169					   ;PRINT FILE
+    170	0028  8A 26 021Br		   mov AH, FN_LEN  ;necham v AH	dlzku mena
+    171	002C  C3				       ret
+Turbo Assembler	 Version 3.2	    04/02/14 20:48:55	    Page 4
+zadanie1.asm
+
+
+
+    172	002D			       endp
+    173
+    174	002D			       START:
+    175					 ;nacitanie programu
+    176	002D  B8 0000s			 MOV AX, SEG DATA
+    177	0030  8E D8				     MOV DS, AX
+    178	0032			     clear:
+    179					 CLRSCR
+1   180	0032  B8 0003			       mov AX,3
+1   181	0035  CD 10			       int 10H
+    182	0037			     vyp_menu:
+    183					 PRINT MENU
+1   184	0037  B4 09			 mov ah,9
+1   185	0039  BA 000Dr			 mov dx,offset MENU
+1   186	003C  CD 21			 int 21h
+    187	003E			     select:
+    188	003E  B4 01				     mov  ah,1
+    189	0040  CD 21				     int  21h
+    190	0042  3C 31				     cmp al,'1'			     ;nacitaj subor
+    191	0044  74 48				     jz	load_file
+    192	0046  3C 32				     cmp al, '2'	     ;vypis subor
+    193	0048  74 20				     jz	output_file
+    194	004A  3C 33				     cmp al, '3'     ;pocet vyskytov v subore
+    195	004C  74 2D				     jz	occur
+    196	004E  3C 34			 cmp al,'4'		     ;zmaz obrazovku,vypis menu
+    197	0050  74 E0				     jz	clear
+    198	0052  3C 1B				     cmp al, 27	; esc na ukoncenie
+    199	0054  74 35				     jz	quit_inter
+    200	0056  3C 0D				     cmp al, 13	;enter na ukoncenie
+    201	0058  74 31				     jz	quit_inter
+    202					 PRINT NEWLINE
+1   203	005A  B4 09			 mov ah,9
+1   204	005C  BA 0000r			 mov dx,offset NEWLINE
+1   205	005F  CD 21			 int 21h
+    206					 PRINT UNKNWN  ;ak stlatcil nieco ine
+1   207	0061  B4 09			 mov ah,9
+1   208	0063  BA 00E3r			 mov dx,offset UNKNWN
+1   209	0066  CD 21			 int 21h
+    210					 ;PRINT	NEWL
+    211	0068  EB D4			 jmp select
+    212
+    213	006A			     output_file:
+    214	006A  A1 01B5r			 mov AX,HANDLE
+    215	006D  3D 0000			 cmp AX,0
+    216	0070  75 6A			 jnz go_on
+    217					 PRINT ERR_NO_HANDLE
+1   218	0072  B4 09			 mov ah,9
+1   219	0074  BA 019Cr			 mov dx,offset ERR_NO_HANDLE
+1   220	0077  CD 21			 int 21h
+    221	0079  EB BC			 jmp vyp_menu
+    222
+    223	007B			     occur:
+    224					 PRINT NEWLINE
+1   225	007B  B4 09			 mov ah,9
+1   226	007D  BA 0000r			 mov dx,offset NEWLINE
+1   227	0080  CD 21			 int 21h
+    228					 PRINT ERROR
+Turbo Assembler	 Version 3.2	    04/02/14 20:48:55	    Page 5
+zadanie1.asm
+
+
+
+1   229	0082  B4 09			 mov ah,9
+1   230	0084  BA 015Ar			 mov dx,offset ERROR
+1   231	0087  CD 21			 int 21h
+    232	0089  EB AC			 jmp vyp_menu
+    233	008B			     quit_inter:
+    234	008B  EB 67 90			 jmp quit
+    235	008E			     load_file:
+    236					 PRINT NEWLINE
+1   237	008E  B4 09			 mov ah,9
+1   238	0090  BA 0000r			 mov dx,offset NEWLINE
+1   239	0093  CD 21			 int 21h
+    240	0095  E8 FF78			 call READNAME
+    241	0098  80 FC 00			 cmp AH,0
+    242	009B  74 17			 jz  nenacitane
+    243	009D  B4 3D			 mov AH, 3DH ; FCIA NA OTVORENIE SUBORU
+    244	009F  B0 00			 mov AL, 0   ; 0= READ-ONLY ACCESS
+    245	00A1  BA 01B7r			 mov DX, OFFSET	FILENAME
+    246	00A4  CD 21			 int 21H
+    247					 ;ak bola chyba	tak ideme prec
+    248	00A6  72 20			 jc file_err
+    249
+    250	00A8  A3 01B5r			 mov handle,ax ;nebola chyba
+    251					 PRINT handle
+1   252	00AB  B4 09			 mov ah,9
+1   253	00AD  BA 01B5r			 mov dx,offset handle
+1   254	00B0  CD 21			 int 21h
+    255	00B2  EB 83			 jmp vyp_menu
+    256
+    257	00B4			     nenacitane:
+    258					 PRINT NEWLINE
+1   259	00B4  B4 09			 mov ah,9
+1   260	00B6  BA 0000r			 mov dx,offset NEWLINE
+1   261	00B9  CD 21			 int 21h
+    262					 PRINT ERROR
+1   263	00BB  B4 09			 mov ah,9
+1   264	00BD  BA 015Ar			 mov dx,offset ERROR
+1   265	00C0  CD 21			 int 21h
+    266	00C2  E8 FF3B			 call WAITING
+    267	00C5  E9 FF6F			 jmp vyp_menu
+    268
+    269	00C8			     file_err:
+    270					 PRINT NEWLINE
+1   271	00C8  B4 09			 mov ah,9
+1   272	00CA  BA 0000r			 mov dx,offset NEWLINE
+1   273	00CD  CD 21			 int 21h
+    274					 PRINT ERROR_FL
+1   275	00CF  B4 09			 mov ah,9
+1   276	00D1  BA 0178r			 mov dx,offset ERROR_FL
+1   277	00D4  CD 21			 int 21h
+    278	00D6  E8 FF27			 call WAIT_FOR
+    279	00D9  E9 FF5B			 jmp vyp_menu
+    280
+    281
+    282
+    283	00DC			     go_on:
+    284	00DC  B4 3F			 mov AH, 3Fh
+    285	00DE  8B 1E 01B5r		 mov BX, HANDLE
+Turbo Assembler	 Version 3.2	    04/02/14 20:48:55	    Page 6
+zadanie1.asm
+
+
+
+    286	00E2  B9 0064			 mov CX, 100
+    287	00E5  BA 021Cr			 lea DX, BUFFER
+    288	00E8  CD 21			 int 21h
+    289
+    290					 PRINT BUFFER
+1   291	00EA  B4 09			 mov ah,9
+1   292	00EC  BA 021Cr			 mov dx,offset BUFFER
+1   293	00EF  CD 21			 int 21h
+    294					 ; TODO
+    295					 ;   potom cyklicky citat po 100 bajtoch cely subor
+    296	00F1  E9 FF43			 jmp vyp_menu
+    297
+    298
+    299
+    300	00F4			     quit:
+    301					 ;ukoncenie programu
+    302	00F4  A1 01B5r			 mov ax,handle
+    303	00F7  3D 0000			 cmp ax, 0
+    304	00FA  74 1B			 jz final
+    305	00FC  8B D8			 mov bx, ax  ;nacitam filehandle
+    306	00FE  B4 3E			 mov ah, 3Eh ;fcia na zavretie handle
+    307	0100  CD 21			 int 21h
+    308					 PRINT TESTFILE
+1   309	0102  B4 09			 mov ah,9
+1   310	0104  BA 0003r			 mov dx,offset TESTFILE
+1   311	0107  CD 21			 int 21h
+    312					 PRINT NEWLINE
+1   313	0109  B4 09			 mov ah,9
+1   314	010B  BA 0000r			 mov dx,offset NEWLINE
+1   315	010E  CD 21			 int 21h
+    316					 PRINT FILENAME
+1   317	0110  B4 09			 mov ah,9
+1   318	0112  BA 01B7r			 mov dx,offset FILENAME
+1   319	0115  CD 21			 int 21h
+    320	0117			     final:
+    321	0117  B4 4C			 mov AH, 4CH
+    322	0119  CD 21				     int 21H
+    323
+    324	011B			       CODE ENDS
+    325				       END START
+Turbo Assembler	 Version 3.2	    04/02/14 20:48:55	    Page 7
+Symbol Table
+
+
+
+
+Symbol Name		Type   Value			   Cref	(defined at #)
+
+??DATE			Text   "04/02/14"
+??FILENAME		Text   "zadanie1"
+??TIME			Text   "20:48:55"
+??VERSION		Number 0314
+@CPU			Text   0101H
+@CURSEG			Text   CODE			   #28	#34  #138
+@FILENAME		Text   ZADANIE1
+@WORDSIZE		Text   2			   #28	#34  #138
+BUFFER			Byte   DATA:021C		   #121	 287  292
+CLEAR			Near   CODE:0032		   #178	 197
+ERROR			Byte   DATA:015A		   #101	 230  264
+ERROR_FL		Byte   DATA:0178		   #106	 276
+ERR_NO_HANDLE		Byte   DATA:019C		   #112	 219
+FILENAME		Byte   DATA:01B7		   #119	 156  245  318
+FILE_ERR		Near   CODE:00C8		   248	#269
+FINAL			Near   CODE:0117		   304	#320
+FN_LEN			Byte   DATA:021B		   #120	 164  170
+GO_ON			Near   CODE:00DC		   216	#283
+HANDLE			Word   DATA:01B5		   #118	 214  250  253	285  302
+LOAD_FILE		Near   CODE:008E		   191	#235
+MENU			Byte   DATA:000D		   #45	185
+MSG_BACK		Byte   DATA:00F4		   #83
+MSG_FILE_NAME		Byte   DATA:0144		   #95
+MSG_RETURN_ENTER	Byte   DATA:0117		   #88	145
+NENACITANE		Near   CODE:00B4		   242	#257
+NEWL			Text   13,10			   #38	40  45	45  45	53  56	60  66	72  78	83  88	95  101	 106  112
+NEWLINE			Byte   DATA:0000		   #40	204  226  238  260  272	 314
+OCCUR			Near   CODE:007B		   195	#223
+OUTPUT_FILE		Near   CODE:006A		   193	#213
+QUIT			Near   CODE:00F4		   234	#300
+QUIT_INTER		Near   CODE:008B		   199	201  #233
+READING			Near   CODE:0013		   #157	 165
+READNAME		Near   CODE:0010		   #154	 240
+RETURN			Near   CODE:0024		   161	#166
+SELECT			Near   CODE:003E		   #187	 211
+START			Near   CODE:002D		   #174	 325
+TAB			Number 0009			   #39	53  56	60  66	72
+TESTFILE		Byte   DATA:0003		   #41	310
+UNKNWN			Byte   DATA:00E3		   #78	208
+VYP_MENU		Near   CODE:0037		   #182	 221  232  255	267  279  296
+WAITING			Near   CODE:0000		   #142	 150  266
+WAIT_FOR		Near   CODE:0000		   #141	 278
+
+Macro Name						   Cref	(defined at #)
+
+CLRSCR							   #126	 179
+PRINT							   #132	 143  183  202	206  217  224  228  236	 251  258  262	270  274  +
+							   290	308  312  316
+
+Groups & Segments	Bit Size Align	Combine	Class	   Cref	(defined at #)
+
+CODE			16  011B Para	none		   #138	 139
+DATA			16  0280 Para	none		   #34	139  176
+ZAS			16  0080 Para	Stack	STACK	   #28	139
+

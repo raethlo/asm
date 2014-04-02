@@ -48,6 +48,7 @@ DATA	SEGMENT
     ;error messages
     ERROR     DB 'Error: Not yet implemented!',NEWL,'$'
     ERROR_FL  DB 'Nastala chyba pri otvarani suboru',NEWL,'$'
+    ERR_NO_HANDLE  DB 'Najprv nacitajte subor',NEWL,'$'
     ;
     ;File handle suboru
     HANDLE    DW 0
@@ -111,14 +112,27 @@ select:
     cmp al,'4'			;zmaz obrazovku,vypis menu
 		jz clear
 		cmp al, 27 ; esc na ukoncenie
-		jz quit
+		jz quit_inter
 		cmp al, 13 ;enter na ukoncenie
-		jz quit
+		jz quit_inter
     PRINT NEWLINE
     PRINT UNKNWN  ;ak stlatcil nieco ine
     ;PRINT NEWL
     jmp select
 
+output_file:
+    mov AX,HANDLE
+    cmp AX,0
+    jnz go_on
+    PRINT ERR_NO_HANDLE
+    jmp vyp_menu
+    
+occur:
+    PRINT NEWLINE
+    PRINT ERROR
+    jmp vyp_menu
+quit_inter:
+    jmp quit    
 load_file:
     PRINT NEWLINE
     call READNAME
@@ -140,27 +154,28 @@ nenacitane:
     PRINT ERROR
     call WAITING
     jmp vyp_menu
+    
 file_err:
     PRINT NEWLINE
     PRINT ERROR_FL
     call WAIT_FOR
     jmp vyp_menu
 
-output_file:
-    ;PRINT NEWLINE
-    ;PRINT ERROR
-    call READNAME
-    call WAIT_FOR
+
+
+go_on:
+    mov AH, 3Fh
+    mov BX, HANDLE
+    mov CX, 100
+    lea DX, BUFFER
+    int 21h
+    
+    PRINT BUFFER
     ; TODO
-    ;   pozret ci je nacitany handle
-    ;   vypisat podla toho error (najprv nacitajte subor) alebo ist dalej
     ;   potom cyklicky citat po 100 bajtoch cely subor
     jmp vyp_menu
 
-occur:
-    PRINT NEWLINE
-    PRINT ERROR
-    jmp vyp_menu
+
 
 quit:
     ;ukoncenie programu
