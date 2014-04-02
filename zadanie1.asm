@@ -41,9 +41,10 @@ DATA	SEGMENT
     UNKNWN    DB 'Neznamy prikaz',NEWL,'$'
 
     ;messages
-    MSG_BACK  DB 'Stlacte ENTER pre navrat do menu',NEWL,'$'
+    MSG_BACK            DB 'Stlacte ENTER pre navrat do menu',NEWL,'$'
     MSG_RETURN_ENTER		DB	NEWL,'Stlacte ENTER pre navrat do hlavneho menu.$'
-    MSG_FILE_NAME DB  'Zadajte meno suboru',NEWL,'$'
+    MSG_FILE_NAME       DB  'Zadajte meno suboru',NEWL,'$'
+    MSG_LEN             DB 'Pocet znako v subore je: ','$' 
 
     ;error messages
     ERROR     DB 'Error: Not yet implemented!',NEWL,'$'
@@ -55,7 +56,8 @@ DATA	SEGMENT
     FILENAME  DB 100 dup (?)
     FN_LEN    DB 0
     BUFFER    DB 100 dup (?)
-    READ      DW 0  
+    READ      DW 0
+    dec_length		db	0  
 DATA ENDS
 
 include makra.asm
@@ -72,6 +74,34 @@ ASSUME CS:CODE,DS:DATA,SS:ZAS  ;makro na vycistenie obrazovky aka clrscr
 		loopne waiting
 		ret
 	endp
+  
+  CHARS proc				; prevod z bytov do dekadickeho cisla
+		mov dec_length, 0	;dlzka decimalneho cisla = pocet cifier zatial 0
+	DEC_DIVISION:
+		xor dx, dx			;uvodny xor
+		mov cx, 10
+		
+		mov ax, bx 		;do ax nacitame nase cislo, ktore chceme vypisovat, vzdy v programe ho umiesnujem to bx
+		div cx			;predelime desiatmi
+		mov bx, ax		;do bx skopirujeme obsah ax, tj predelene cislo
+		push dx			;do dx hodime cifru
+		inc dec_length		;pridame jednu cifru
+		cmp bx, 0			;skontrolujeme ci este mame cifry v bx
+		jz DEC_PRINT
+		jmp DEC_DIVISION
+		
+	DEC_PRINT:		;vypisanie dekadickeho cisla
+		pop dx		;cifru vytiahneme z dx
+		add dx, 30h			;posun na zaciatok cisel
+		mov ah, 02h			;funkcia na print cisla
+		int 21h
+		dec dec_length		; posun o cifru dalej
+		cmp dec_length, 0
+		jz navrat ;uz sme vypisali cele cislo
+		jmp DEC_PRINT
+	navrat:
+		ret	
+	endp CHARS
   
   READNAME proc
     ;PRINT MSG_FILE_NAME
@@ -113,16 +143,22 @@ select:
     cmp al,'4'			;zmaz obrazovku,vypis menu
 		jz clear
 		cmp al, 27 ; esc na ukoncenie
-		jz quit_inter
+		jz quit_inter1
 		cmp al, 13 ;enter na ukoncenie
-		jz quit_inter
+		jz quit_inter1
     PRINT NEWLINE
     PRINT UNKNWN  ;ak stlatcil nieco ine
     ;PRINT NEWL
     jmp select
 load_inter:
     jmp load_file
-    
+quit_inter1:
+    jmp quit_inter2     
+occur:
+    PRINT NEWLINE
+    PRINT ERROR
+    jmp vyp_menu
+       
 output_file:
     PRINT NEWLINE
     mov AX,HANDLE
@@ -132,6 +168,12 @@ output_file:
     jmp vyp_menu
  
 go_on:
+    mov ah, 42h
+    mov BX, HANDLE
+    mov al, 0 ;idem od current
+    mov dx, 0
+    mov cx, 0
+cont:         ;pokracujem citanie
     mov AH, 3Fh
     mov BX, HANDLE
     mov CX, 99
@@ -147,7 +189,7 @@ go_on:
     mov al, 1 ;idem od current
     mov dx, 99
     mov cx, 0
-    jmp go_on    
+    jmp cont    
 end_read:
     mov bx,ax
     mov BUFFER[bx],'$' 
@@ -155,16 +197,18 @@ end_read:
     call WAIT_FOR
     jmp vyp_menu  
     
-quit_inter:
-    jmp quit    
-        
-occur:
-    PRINT NEWLINE
-    PRINT ERROR
-    jmp vyp_menu
-    
+quit_inter2:
+    jmp quit
+
 load_file:
     PRINT NEWLINE
+    mov ax,handle
+    cmp ax, 0
+    jz empty_handle
+    mov bx, ax  ;nacitam filehandle
+    mov ah, 3Eh ;fcia na zavretie handle
+    int 21h
+empty_handle:   
     call READNAME
     cmp AH,0
     jz  nenacitane
