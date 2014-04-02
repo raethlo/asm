@@ -1,4 +1,4 @@
-Turbo Assembler	 Version 3.2	    04/02/14 22:53:25	    Page 1
+Turbo Assembler	 Version 3.2	    04/02/14 22:57:56	    Page 1
 zadanie1.asm
 
 
@@ -60,7 +60,7 @@ zadanie1.asm
      55	      62 6F 72 0D 0A
      56	0055  09 32 2E 20 56 79	70+				       DB TAB,'2. Vypisat obsah	suboru',NEWL
      57	      69 73 61 74 20 6F	62+
-Turbo Assembler	 Version 3.2	    04/02/14 22:53:25	    Page 2
+Turbo Assembler	 Version 3.2	    04/02/14 22:57:56	    Page 2
 zadanie1.asm
 
 
@@ -122,7 +122,7 @@ zadanie1.asm
     112	      70 72 69 20 6F 74	76+
     113	      61 72 61 6E 69 20	73+
     114	      75 62 6F 72 75 0D	0A+
-Turbo Assembler	 Version 3.2	    04/02/14 22:53:25	    Page 3
+Turbo Assembler	 Version 3.2	    04/02/14 22:57:56	    Page 3
 zadanie1.asm
 
 
@@ -184,7 +184,7 @@ zadanie1.asm
     169	001E  8B D8				     mov bx, ax		     ;do bx skopirujeme	obsah ax, tj predelene cislo
     170	0020  52				     push dx		     ;do dx hodime cifru
     171	0021  FE 06 029Ar			     inc dec_length	     ;pridame jednu cifru
-Turbo Assembler	 Version 3.2	    04/02/14 22:53:25	    Page 4
+Turbo Assembler	 Version 3.2	    04/02/14 22:57:56	    Page 4
 zadanie1.asm
 
 
@@ -246,7 +246,7 @@ zadanie1.asm
     226	0076  74 24				     jz	load_inter
     227	0078  3C 32				     cmp al, '2'	     ;vypis subor
     228	007A  74 36				     jz	output_file
-Turbo Assembler	 Version 3.2	    04/02/14 22:53:25	    Page 5
+Turbo Assembler	 Version 3.2	    04/02/14 22:57:56	    Page 5
 zadanie1.asm
 
 
@@ -270,9 +270,9 @@ zadanie1.asm
     245					 ;PRINT	NEWL
     246	009A  EB D4			 jmp select
     247	009C			     load_inter:
-    248	009C  E9 0080			 jmp load_file
+    248	009C  E9 0082			 jmp load_file
     249	009F			     quit_inter1:
-    250	009F  EB 7B 90			 jmp quit_inter2
+    250	009F  EB 7D 90			 jmp quit_inter2
     251	00A2			     occur:
     252					 PRINT NEWLINE
 1   253	00A2  B4 09			 mov ah,9
@@ -304,131 +304,132 @@ zadanie1.asm
     279	00D0  B0 00			 mov al, 0 ;idem od current
     280	00D2  BA 0000			 mov dx, 0
     281	00D5  B9 0000			 mov cx, 0
-    282	00D8			     cont:	   ;pokracujem citanie
-    283	00D8  B4 3F			 mov AH, 3Fh
-    284	00DA  8B 1E 01CDr		 mov BX, HANDLE
-    285	00DE  B9 0063			 mov CX, 99
-Turbo Assembler	 Version 3.2	    04/02/14 22:53:25	    Page 6
+    282	00D8  CD 21			 int 21h
+    283	00DA			     cont:	   ;pokracujem citanie
+    284	00DA  B4 3F			 mov AH, 3Fh
+    285	00DC  8B 1E 01CDr		 mov BX, HANDLE
+Turbo Assembler	 Version 3.2	    04/02/14 22:57:56	    Page 6
 zadanie1.asm
 
 
 
-    286	00E1  BA 0234r			 lea DX, BUFFER
-    287	00E4  CD 21			 int 21h
-    288	00E6  01 06 0298r		 add READ,AX
-    289	00EA  3B C1			 cmp ax,cx ;porovnam kolko ancital
-    290	00EC  75 1A			 jne end_read;chod niekam, kde
-    291	00EE  8B D8			 mov bx,ax
-    292	00F0  C6 87 0234r 24		 mov BUFFER[bx],'$'
-    293					 PRINT BUFFER
-1   294	00F5  B4 09			 mov ah,9
-1   295	00F7  BA 0234r			 mov dx,offset BUFFER
-1   296	00FA  CD 21			 int 21h
-    297	00FC  B4 42			 mov ah, 42h
-    298	00FE  B0 01			 mov al, 1 ;idem od current
-    299	0100  BA 0063			 mov dx, 99
-    300	0103  B9 0000			 mov cx, 0
-    301	0106  EB D0			 jmp cont
-    302	0108			     end_read:
-    303	0108  8B D8			 mov bx,ax
-    304	010A  C6 87 0234r 24		 mov BUFFER[bx],'$'
-    305					 PRINT BUFFER
-1   306	010F  B4 09			 mov ah,9
-1   307	0111  BA 0234r			 mov dx,offset BUFFER
-1   308	0114  CD 21			 int 21h
-    309	0116  E8 FEE7			 call WAIT_FOR
-    310	0119  E9 FF4D			 jmp vyp_menu
-    311
-    312	011C			     quit_inter2:
-    313	011C  EB 5E 90			 jmp quit
-    314
-    315	011F			     load_file:
-    316					 PRINT NEWLINE
-1   317	011F  B4 09			 mov ah,9
-1   318	0121  BA 0000r			 mov dx,offset NEWLINE
-1   319	0124  CD 21			 int 21h
-    320	0126  A1 01CDr			 mov ax,handle
-    321	0129  3D 0000			 cmp ax, 0
-    322	012C  74 06			 jz empty_handle
-    323	012E  8B D8			 mov bx, ax  ;nacitam filehandle
-    324	0130  B4 3E			 mov ah, 3Eh ;fcia na zavretie handle
-    325	0132  CD 21			 int 21h
-    326	0134			     empty_handle:
-    327	0134  E8 FF0B			 call READNAME
-    328	0137  80 FC 00			 cmp AH,0
-    329	013A  74 18			 jz  nenacitane
-    330	013C  B4 3D			 mov AH, 3DH ; FCIA NA OTVORENIE SUBORU
-    331	013E  B0 00			 mov AL, 0   ; 0= READ-ONLY ACCESS
-    332	0140  BA 01CFr			 mov DX, OFFSET	FILENAME
-    333	0143  CD 21			 int 21H
-    334					 ;ak bola chyba	tak ideme prec
-    335	0145  72 21			 jc file_err
-    336
-    337	0147  A3 01CDr			 mov handle,ax ;nebola chyba
-    338					 PRINT handle
-1   339	014A  B4 09			 mov ah,9
-1   340	014C  BA 01CDr			 mov dx,offset handle
-1   341	014F  CD 21			 int 21h
-    342	0151  E9 FF15			 jmp vyp_menu
-Turbo Assembler	 Version 3.2	    04/02/14 22:53:25	    Page 7
+    286	00E0  B9 0063			 mov CX, 99
+    287	00E3  BA 0234r			 lea DX, BUFFER
+    288	00E6  CD 21			 int 21h
+    289	00E8  01 06 0298r		 add READ,AX
+    290	00EC  3B C1			 cmp ax,cx ;porovnam kolko ancital
+    291	00EE  75 1A			 jne end_read;chod niekam, kde
+    292	00F0  8B D8			 mov bx,ax
+    293	00F2  C6 87 0234r 24		 mov BUFFER[bx],'$'
+    294					 PRINT BUFFER
+1   295	00F7  B4 09			 mov ah,9
+1   296	00F9  BA 0234r			 mov dx,offset BUFFER
+1   297	00FC  CD 21			 int 21h
+    298	00FE  B4 42			 mov ah, 42h
+    299	0100  B0 01			 mov al, 1 ;idem od current
+    300	0102  BA 0063			 mov dx, 99
+    301	0105  B9 0000			 mov cx, 0
+    302	0108  EB D0			 jmp cont
+    303	010A			     end_read:
+    304	010A  8B D8			 mov bx,ax
+    305	010C  C6 87 0234r 24		 mov BUFFER[bx],'$'
+    306					 PRINT BUFFER
+1   307	0111  B4 09			 mov ah,9
+1   308	0113  BA 0234r			 mov dx,offset BUFFER
+1   309	0116  CD 21			 int 21h
+    310	0118  E8 FEE5			 call WAIT_FOR
+    311	011B  E9 FF4B			 jmp vyp_menu
+    312
+    313	011E			     quit_inter2:
+    314	011E  EB 5E 90			 jmp quit
+    315
+    316	0121			     load_file:
+    317					 PRINT NEWLINE
+1   318	0121  B4 09			 mov ah,9
+1   319	0123  BA 0000r			 mov dx,offset NEWLINE
+1   320	0126  CD 21			 int 21h
+    321	0128  A1 01CDr			 mov ax,handle
+    322	012B  3D 0000			 cmp ax, 0
+    323	012E  74 06			 jz empty_handle
+    324	0130  8B D8			 mov bx, ax  ;nacitam filehandle
+    325	0132  B4 3E			 mov ah, 3Eh ;fcia na zavretie handle
+    326	0134  CD 21			 int 21h
+    327	0136			     empty_handle:
+    328	0136  E8 FF09			 call READNAME
+    329	0139  80 FC 00			 cmp AH,0
+    330	013C  74 18			 jz  nenacitane
+    331	013E  B4 3D			 mov AH, 3DH ; FCIA NA OTVORENIE SUBORU
+    332	0140  B0 00			 mov AL, 0   ; 0= READ-ONLY ACCESS
+    333	0142  BA 01CFr			 mov DX, OFFSET	FILENAME
+    334	0145  CD 21			 int 21H
+    335					 ;ak bola chyba	tak ideme prec
+    336	0147  72 21			 jc file_err
+    337
+    338	0149  A3 01CDr			 mov handle,ax ;nebola chyba
+    339					 PRINT handle
+1   340	014C  B4 09			 mov ah,9
+1   341	014E  BA 01CDr			 mov dx,offset handle
+1   342	0151  CD 21			 int 21h
+Turbo Assembler	 Version 3.2	    04/02/14 22:57:56	    Page 7
 zadanie1.asm
 
 
 
-    343
-    344	0154			     nenacitane:
-    345					 PRINT NEWLINE
-1   346	0154  B4 09			 mov ah,9
-1   347	0156  BA 0000r			 mov dx,offset NEWLINE
-1   348	0159  CD 21			 int 21h
-    349					 PRINT ERROR
-1   350	015B  B4 09			 mov ah,9
-1   351	015D  BA 0172r			 mov dx,offset ERROR
-1   352	0160  CD 21			 int 21h
-    353	0162  E8 FE9B			 call WAITING
-    354	0165  E9 FF01			 jmp vyp_menu
-    355
-    356	0168			     file_err:
-    357					 PRINT NEWLINE
-1   358	0168  B4 09			 mov ah,9
-1   359	016A  BA 0000r			 mov dx,offset NEWLINE
-1   360	016D  CD 21			 int 21h
-    361					 PRINT ERROR_FL
-1   362	016F  B4 09			 mov ah,9
-1   363	0171  BA 0190r			 mov dx,offset ERROR_FL
-1   364	0174  CD 21			 int 21h
-    365	0176  E8 FE87			 call WAIT_FOR
-    366	0179  E9 FEED			 jmp vyp_menu
-    367
+    343	0153  E9 FF13			 jmp vyp_menu
+    344
+    345	0156			     nenacitane:
+    346					 PRINT NEWLINE
+1   347	0156  B4 09			 mov ah,9
+1   348	0158  BA 0000r			 mov dx,offset NEWLINE
+1   349	015B  CD 21			 int 21h
+    350					 PRINT ERROR
+1   351	015D  B4 09			 mov ah,9
+1   352	015F  BA 0172r			 mov dx,offset ERROR
+1   353	0162  CD 21			 int 21h
+    354	0164  E8 FE99			 call WAITING
+    355	0167  E9 FEFF			 jmp vyp_menu
+    356
+    357	016A			     file_err:
+    358					 PRINT NEWLINE
+1   359	016A  B4 09			 mov ah,9
+1   360	016C  BA 0000r			 mov dx,offset NEWLINE
+1   361	016F  CD 21			 int 21h
+    362					 PRINT ERROR_FL
+1   363	0171  B4 09			 mov ah,9
+1   364	0173  BA 0190r			 mov dx,offset ERROR_FL
+1   365	0176  CD 21			 int 21h
+    366	0178  E8 FE85			 call WAIT_FOR
+    367	017B  E9 FEEB			 jmp vyp_menu
     368
     369
-    370	017C			     quit:
-    371					 ;ukoncenie programu
-    372	017C  A1 01CDr			 mov ax,handle
-    373	017F  3D 0000			 cmp ax, 0
-    374	0182  74 1B			 jz final
-    375	0184  8B D8			 mov bx, ax  ;nacitam filehandle
-    376	0186  B4 3E			 mov ah, 3Eh ;fcia na zavretie handle
-    377	0188  CD 21			 int 21h
-    378					 PRINT TESTFILE
-1   379	018A  B4 09			 mov ah,9
-1   380	018C  BA 0003r			 mov dx,offset TESTFILE
-1   381	018F  CD 21			 int 21h
-    382					 PRINT NEWLINE
-1   383	0191  B4 09			 mov ah,9
-1   384	0193  BA 0000r			 mov dx,offset NEWLINE
-1   385	0196  CD 21			 int 21h
-    386					 PRINT FILENAME
-1   387	0198  B4 09			 mov ah,9
-1   388	019A  BA 01CFr			 mov dx,offset FILENAME
-1   389	019D  CD 21			 int 21h
-    390	019F			     final:
-    391	019F  B4 4C			 mov AH, 4CH
-    392	01A1  CD 21				     int 21H
-    393
-    394	01A3			       CODE ENDS
-    395				       END START
-Turbo Assembler	 Version 3.2	    04/02/14 22:53:25	    Page 8
+    370
+    371	017E			     quit:
+    372					 ;ukoncenie programu
+    373	017E  A1 01CDr			 mov ax,handle
+    374	0181  3D 0000			 cmp ax, 0
+    375	0184  74 1B			 jz final
+    376	0186  8B D8			 mov bx, ax  ;nacitam filehandle
+    377	0188  B4 3E			 mov ah, 3Eh ;fcia na zavretie handle
+    378	018A  CD 21			 int 21h
+    379					 PRINT TESTFILE
+1   380	018C  B4 09			 mov ah,9
+1   381	018E  BA 0003r			 mov dx,offset TESTFILE
+1   382	0191  CD 21			 int 21h
+    383					 PRINT NEWLINE
+1   384	0193  B4 09			 mov ah,9
+1   385	0195  BA 0000r			 mov dx,offset NEWLINE
+1   386	0198  CD 21			 int 21h
+    387					 PRINT FILENAME
+1   388	019A  B4 09			 mov ah,9
+1   389	019C  BA 01CFr			 mov dx,offset FILENAME
+1   390	019F  CD 21			 int 21h
+    391	01A1			     final:
+    392	01A1  B4 4C			 mov AH, 4CH
+    393	01A3  CD 21				     int 21H
+    394
+    395	01A5			       CODE ENDS
+    396				       END START
+Turbo Assembler	 Version 3.2	    04/02/14 22:57:56	    Page 8
 Symbol Table
 
 
@@ -438,31 +439,31 @@ Symbol Name		Type   Value			   Cref	(defined at #)
 
 ??DATE			Text   "04/02/14"
 ??FILENAME		Text   "zadanie1"
-??TIME			Text   "22:53:25"
+??TIME			Text   "22:57:55"
 ??VERSION		Number 0314
 @CPU			Text   0101H
 @CURSEG			Text   CODE			   #28	#34  #144
 @FILENAME		Text   ZADANIE1
 @WORDSIZE		Text   2			   #28	#34  #144
-BUFFER			Byte   DATA:0234		   #125	 286  292  295	304  307
+BUFFER			Byte   DATA:0234		   #125	 287  293  296	305  308
 CHARS			Near   CODE:0010		   #160
 CLEAR			Near   CODE:0064		   #213	 232
-CONT			Near   CODE:00D8		   #282	 301
+CONT			Near   CODE:00DA		   #283	 302
 DEC_DIVISION		Near   CODE:0015		   #162	 174
 DEC_LENGTH		Byte   DATA:029A		   #127	 161  171  181	182
 DEC_PRINT		Near   CODE:002C		   173	#176  184
-EMPTY_HANDLE		Near   CODE:0134		   322	#326
-END_READ		Near   CODE:0108		   290	#302
-ERROR			Byte   DATA:0172		   #105	 258  351
-ERROR_FL		Byte   DATA:0190		   #110	 363
+EMPTY_HANDLE		Near   CODE:0136		   323	#327
+END_READ		Near   CODE:010A		   291	#303
+ERROR			Byte   DATA:0172		   #105	 258  352
+ERROR_FL		Byte   DATA:0190		   #110	 364
 ERR_NO_HANDLE		Byte   DATA:01B4		   #116	 272
-FILENAME		Byte   DATA:01CF		   #123	 191  332  388
-FILE_ERR		Near   CODE:0168		   335	#356
-FINAL			Near   CODE:019F		   374	#390
+FILENAME		Byte   DATA:01CF		   #123	 191  333  389
+FILE_ERR		Near   CODE:016A		   336	#357
+FINAL			Near   CODE:01A1		   375	#391
 FN_LEN			Byte   DATA:0233		   #124	 199  205
 GO_ON			Near   CODE:00CA		   269	#276
-HANDLE			Word   DATA:01CD		   #122	 267  278  284	320  337  340  372
-LOAD_FILE		Near   CODE:011F		   248	#315
+HANDLE			Word   DATA:01CD		   #122	 267  278  285	321  338  341  373
+LOAD_FILE		Near   CODE:0121		   248	#316
 LOAD_INTER		Near   CODE:009C		   226	#247
 MENU			Byte   DATA:000D		   #45	220
 MSG_BACK		Byte   DATA:00F2		   #83
@@ -470,27 +471,27 @@ MSG_FILE_NAME		Byte   DATA:0142		   #95
 MSG_LEN			Byte   DATA:0158		   #99
 MSG_RETURN_ENTER	Byte   DATA:0115		   #88	151
 NAVRAT			Near   CODE:0041		   183	#185
-NENACITANE		Near   CODE:0154		   329	#344
+NENACITANE		Near   CODE:0156		   330	#345
 NEWL			Text   13,10			   #38	40  45	45  45	53  56	60  66	72  78	83  88	95  105	 110  116
-NEWLINE			Byte   DATA:0000		   #40	239  254  265  318  347	 359  384
+NEWLINE			Byte   DATA:0000		   #40	239  254  265  319  348	 360  385
 OCCUR			Near   CODE:00A2		   230	#251
 OUTPUT_FILE		Near   CODE:00B2		   228	#262
-QUIT			Near   CODE:017C		   313	#370
+QUIT			Near   CODE:017E		   314	#371
 QUIT_INTER1		Near   CODE:009F		   234	236  #249
-QUIT_INTER2		Near   CODE:011C		   250	#312
-READ			Word   DATA:0298		   #126	 288
+QUIT_INTER2		Near   CODE:011E		   250	#313
+READ			Word   DATA:0298		   #126	 289
 READING			Near   CODE:0045		   #192	 200
-READNAME		Near   CODE:0042		   #189	 327
+READNAME		Near   CODE:0042		   #189	 328
 RETURN			Near   CODE:0056		   196	#201
 SELECT			Near   CODE:0070		   #222	 246
-START			Near   CODE:005F		   #209	 395
+START			Near   CODE:005F		   #209	 396
 TAB			Number 0009			   #39	53  56	60  66	72
-TESTFILE		Byte   DATA:0003		   #41	380
+TESTFILE		Byte   DATA:0003		   #41	381
 UNKNWN			Byte   DATA:00E1		   #78	243
-VYP_MENU		Near   CODE:0069		   #217	 260  274  310	342  354  366
-WAITING			Near   CODE:0000		   #148	 156  353
-WAIT_FOR		Near   CODE:0000		   #147	 309  365
-Turbo Assembler	 Version 3.2	    04/02/14 22:53:25	    Page 9
+VYP_MENU		Near   CODE:0069		   #217	 260  274  311	343  355  367
+WAITING			Near   CODE:0000		   #148	 156  354
+WAIT_FOR		Near   CODE:0000		   #147	 310  366
+Turbo Assembler	 Version 3.2	    04/02/14 22:57:56	    Page 9
 Symbol Table
 
 
@@ -499,12 +500,12 @@ Symbol Table
 Macro Name						   Cref	(defined at #)
 
 CLRSCR							   #132	 214
-PRINT							   #138	 149  218  237	241  252  256  263  270	 293  305  316	338  345  +
-							   349	357  361  378  382  386
+PRINT							   #138	 149  218  237	241  252  256  263  270	 294  306  317	339  346  +
+							   350	358  362  379  383  387
 
 Groups & Segments	Bit Size Align	Combine	Class	   Cref	(defined at #)
 
-CODE			16  01A3 Para	none		   #144	 145
+CODE			16  01A5 Para	none		   #144	 145
 DATA			16  029B Para	none		   #34	145  211
 ZAS			16  0080 Para	Stack	STACK	   #28	145
 

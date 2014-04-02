@@ -173,6 +173,7 @@ go_on:
     mov al, 0 ;idem od current
     mov dx, 0
     mov cx, 0
+    int 21h
 cont:         ;pokracujem citanie
     mov AH, 3Fh
     mov BX, HANDLE
