@@ -161,6 +161,7 @@ occur:
        
 output_file:
     PRINT NEWLINE
+    mov READ, 0
     mov AX,HANDLE
     cmp AX,0
     jnz go_on
@@ -168,9 +169,9 @@ output_file:
     jmp vyp_menu
  
 go_on:
-    mov ah, 42h
+    mov ah, 42h ;nastavim sa na zaciatok suboru
     mov BX, HANDLE
-    mov al, 0 ;idem od current
+    mov al, 0 
     mov dx, 0
     mov cx, 0
     int 21h
@@ -179,14 +180,14 @@ cont:         ;pokracujem citanie
     mov BX, HANDLE
     mov CX, 99
     lea DX, BUFFER
-    int 21h
+    int 21h        ;precitam 99bajtov do bufferu
     add READ,AX    
     cmp ax,cx ;porovnam kolko ancital
-    jne end_read;chod niekam, kde
+    jne end_read; ak sa nerovnaju uz som docital
     mov bx,ax
-    mov BUFFER[bx],'$'
+    mov BUFFER[bx],'$' ;vypisem co zatial mam
     PRINT BUFFER
-    mov ah, 42h
+    mov ah, 42h        ;posuniem sa o 99 B dalej
     mov al, 1 ;idem od current
     mov dx, 99
     mov cx, 0
@@ -195,6 +196,10 @@ end_read:
     mov bx,ax
     mov BUFFER[bx],'$' 
     PRINT BUFFER
+    PRINT NEWLINE
+    PRINT MSG_LEN
+    mov bx,read
+    call CHARS
     call WAIT_FOR
     jmp vyp_menu  
     
