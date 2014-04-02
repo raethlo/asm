@@ -35,7 +35,7 @@ DATA	SEGMENT
     MENU  	  DB NEWL,'ASM Zadanie 1. -- Autor: Roman Rostar (c)',NEWL,'MENU :',NEWL
 		    	    DB TAB,'1. Nacitat subor',NEWL
 		    		  DB TAB,'2. Vypisat obsah suboru',NEWL
-        		  DB TAB,'3. Zistit pocet vyskytov slova v subore',NEWL
+        		  DB TAB,'3. Pozicia maximalneho znaku v subore',NEWL
         		  DB TAB,'4. Zmazat obrazovku a vypisat menu',NEWL,'$'
               DB TAB,'[ESC,ENTER pre vypnutie programu',NEWL,'$'
     UNKNWN    DB 'Neznamy prikaz',NEWL,'$'
@@ -54,7 +54,8 @@ DATA	SEGMENT
     HANDLE    DW 0
     FILENAME  DB 100 dup (?)
     FN_LEN    DB 0
-    BUFFER    DB 100 dup (?)  
+    BUFFER    DB 100 dup (?)
+    READ      DW 0  
 DATA ENDS
 
 include makra.asm
@@ -104,7 +105,7 @@ select:
 		mov  ah,1
 		int  21h
 		cmp al,'1'			;nacitaj subor
-		jz load_file
+		jz load_inter
 		cmp al, '2' 		;vypis subor
 		jz output_file
 		cmp al, '3'     ;pocet vyskytov v subore
@@ -119,20 +120,49 @@ select:
     PRINT UNKNWN  ;ak stlatcil nieco ine
     ;PRINT NEWL
     jmp select
-
+load_inter:
+    jmp load_file
+    
 output_file:
+    PRINT NEWLINE
     mov AX,HANDLE
     cmp AX,0
     jnz go_on
     PRINT ERR_NO_HANDLE
     jmp vyp_menu
+ 
+go_on:
+    mov AH, 3Fh
+    mov BX, HANDLE
+    mov CX, 99
+    lea DX, BUFFER
+    int 21h
+    add READ,AX    
+    cmp ax,cx ;porovnam kolko ancital
+    jne end_read;chod niekam, kde
+    mov bx,ax
+    mov BUFFER[bx],'$'
+    PRINT BUFFER
+    mov ah, 42h
+    mov al, 1 ;idem od current
+    mov dx, 99
+    mov cx, 0
+    jmp go_on    
+end_read:
+    mov bx,ax
+    mov BUFFER[bx],'$' 
+    PRINT BUFFER
+    call WAIT_FOR
+    jmp vyp_menu  
     
+quit_inter:
+    jmp quit    
+        
 occur:
     PRINT NEWLINE
     PRINT ERROR
     jmp vyp_menu
-quit_inter:
-    jmp quit    
+    
 load_file:
     PRINT NEWLINE
     call READNAME
@@ -159,20 +189,6 @@ file_err:
     PRINT NEWLINE
     PRINT ERROR_FL
     call WAIT_FOR
-    jmp vyp_menu
-
-
-
-go_on:
-    mov AH, 3Fh
-    mov BX, HANDLE
-    mov CX, 100
-    lea DX, BUFFER
-    int 21h
-    
-    PRINT BUFFER
-    ; TODO
-    ;   potom cyklicky citat po 100 bajtoch cely subor
     jmp vyp_menu
 
 

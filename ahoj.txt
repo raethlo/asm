@@ -1,1 +1,24 @@
-ahoj ja som Roman , ako sa mas?
+This function changes the logical read/write position in the specified
+    file, by incrementing or decrementing the value assigned to the file
+    pointer. The offset to add to the file pointer is given as a signed
+    32-bit integer in the CX:DX register pair--the more significant
+    portion of the offset in CX. A mode code, specified in AL, indicates
+    whether the offset specified in CX:DX is referenced to the beginning
+    of the file (mode 0), the pointer's current location (mode 1), or the
+    end of the file (mode 2).
+    This function changes the logical read/write position in the specified
+    file, by incrementing or decrementing the value assigned to the file
+    pointer. The offset to add to the file pointer is given as a signed
+    32-bit integer in the CX:DX register pair--the more significant
+    portion of the offset in CX. A mode code, specified in AL, indicates
+    whether the offset specified in CX:DX is referenced to the beginning
+    of the file (mode 0), the pointer's current location (mode 1), or the
+    end of the file (mode 2).
+    This function changes the logical read/write position in the specified
+    file, by incrementing or decrementing the value assigned to the file
+    pointer. The offset to add to the file pointer is given as a signed
+    32-bit integer in the CX:DX register pair--the more significant
+    portion of the offset in CX. A mode code, specified in AL, indicates
+    whether the offset specified in CX:DX is referenced to the beginning
+    of the file (mode 0), the pointer's current location (mode 1), or the
+    end of the file (mode 2).
