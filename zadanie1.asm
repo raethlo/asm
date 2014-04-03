@@ -44,7 +44,9 @@ DATA	SEGMENT
     MSG_BACK            DB 'Stlacte ENTER pre navrat do menu',NEWL,'$'
     MSG_RETURN_ENTER		DB	NEWL,'Stlacte ENTER pre navrat do hlavneho menu.$'
     MSG_FILE_NAME       DB  'Zadajte meno suboru',NEWL,'$'
-    MSG_LEN             DB 'Pocet znako v subore je: ','$' 
+    MSG_LEN             DB 'Pocet znako v subore je: ','$'
+    MSG_CHR             DB 'Najvacsi znak je: ','$'
+    MSG_POS             DB 'na pozicii: ','$' 
 
     ;error messages
     ERROR     DB 'Error: Not yet implemented!',NEWL,'$'
@@ -57,6 +59,10 @@ DATA	SEGMENT
     FN_LEN    DB 0
     BUFFER    DB 100 dup (?)
     READ      DW 0
+    D         DW 0
+    POS       DW 0
+    MAX_VAL   DB 0
+    MAX_POS   DW 0
     dec_length		db	0  
 DATA ENDS
 
@@ -64,16 +70,6 @@ include makra.asm
 
 CODE SEGMENT
 ASSUME CS:CODE,DS:DATA,SS:ZAS  ;makro na vycistenie obrazovky aka clrscr
-
-  WAIT_FOR proc
-    waiting:
-		PRINT MSG_RETURN_ENTER
-      mov AH, 8		; nacitanie znaku
-			int 21H
-			cmp AL, 13		;Porovnaj ci bol stlaceny enter
-		loopne waiting
-		ret
-	endp
   
   CHARS proc				; prevod z bytov do dekadickeho cisla
 		mov dec_length, 0	;dlzka decimalneho cisla = pocet cifier zatial 0
@@ -102,6 +98,103 @@ ASSUME CS:CODE,DS:DATA,SS:ZAS  ;makro na vycistenie obrazovky aka clrscr
 	navrat:
 		ret	
 	endp CHARS
+
+  OCC proc
+    mov D,0
+    mov POS,0
+    mov MAX_VAL, 0
+    mov MAX_POS, 0
+  
+    PRINT NEWLINE
+    mov AX,HANDLE
+    cmp AX,0
+    jnz go_on1
+    PRINT ERR_NO_HANDLE
+    ret
+    
+go_on1:
+    mov ah, 42h ;nastavim sa na zaciatok suboru
+    mov BX, HANDLE
+    mov al, 0 
+    mov dx, 0
+    mov cx, 0
+    int 21h
+cont1:         ;pokracujem citanie
+    mov AH, 3Fh
+    mov BX, HANDLE
+    mov CX, 99
+    lea DX, BUFFER
+    int 21h        ;precitam 99bajtov do bufferu
+    
+    push bx ;schovam bx nakonci vytiahnem
+    
+    cmp ax,cx ;porovnam kolko ancital
+    jne end_read1; ak sa nerovnaju uz som docital
+    push ax
+    push bx
+    push dx
+
+    mov D,0
+loo:
+    ;prejdi buffer
+    lea di, buffer
+    add di,D
+    MOV AL, [DI]
+    cmp AL, MAX_VAL
+    jng next
+    MOV MAX_VAL,AL ;ak je tak prepis maxhodnotu
+		MOV AX,POS
+		MOV MAX_POS, AX
+next:
+    inc D
+    inc POS
+    MOV BX, D			;zistujem ci uz som na konci obsahu suboru
+		CMP BX,99
+		JNG loo
+    pop dx
+    pop bx
+    pop ax
+    jmp cont1
+       
+end_read1:
+    push ax
+    push bx
+    push dx
+
+    mov D,0
+loo2:
+    ;prejdi buffer
+    lea di, buffer
+    add di,D
+    MOV AL, [DI]
+    cmp AL, MAX_VAL
+    jng next2
+    MOV MAX_VAL,AL ;ak je tak prepis maxhodnotu
+		MOV AX,POS
+		MOV MAX_POS, AX
+next2:
+    inc D
+    inc POS
+    MOV BX, D			;zistujem ci uz som na konci obsahu suboru
+		CMP BX,CX
+		JNG loo2
+    pop dx
+    pop bx
+    pop ax
+    ret
+  endp
+
+  WAIT_FOR proc
+    waiting:
+		PRINT MSG_RETURN_ENTER
+      mov AH, 8		; nacitanie znaku
+			int 21H
+			cmp AL, 13		;Porovnaj ci bol stlaceny enter
+		loopne waiting
+		ret
+	endp
+  
+  
   
   READNAME proc
     ;PRINT MSG_FILE_NAME
@@ -153,12 +246,21 @@ select:
 load_inter:
     jmp load_file
 quit_inter1:
-    jmp quit_inter2     
+    jmp quit_inter2
+         
 occur:
+    call OCC
+    PRINT MSG_CHR
+    MOV AH, 02h
+		MOV DL, MAX_VAL
+		INT 21h
     PRINT NEWLINE
-    PRINT ERROR
+    PRINT MSG_POS
+    mov BX, MAX_POS
+    call chars   
+    call wait_for  
     jmp vyp_menu
-       
+         
 output_file:
     PRINT NEWLINE
     mov READ, 0
