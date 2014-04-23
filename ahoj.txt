@@ -1,4 +1,4 @@
-This function changes the logical read/write position in the specified
+zThis function changes the logical read/write position in the specified
     file, by incrementing or decrementing the value assigned to the file
     pointer. The offset to add to the file pointer is given as a signed
     32-bit integer in the CX:DX register pair--the more significant

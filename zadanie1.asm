@@ -1,4 +1,4 @@
-; Zadanie c.1
+; Zadanie1 c.21                                                                      
 ; Roman Roöt·r
 ;
 ; TEXT ZADANIA
@@ -10,7 +10,8 @@
 ;	pam‰te sa bude pres˙vat vûdy (aû na poslednÈ cÌtanie) cel· velkost pola. Oöetrite chybovÈ stavy.
 ;
 ; DOPLNKOVA ULOHA
-; NaËÌtaù reùazec a vypÌsaù poËet jeho v˝skytov (ako podreùazca) v s˙bore.
+; POVODNE: 14. NaËÌtaù reùazec a vypÌsaù poËet jeho v˝skytov (ako podreùazca) v s˙bore.
+; ZMENENE NA: 21. N·jsù znak s maxim·lnou hodnotou a vypÌsaù jeho pozÌciu.
 ;PREKLAD:         [cesta]\tasm /l/zi/c subor.asm
 ;LINKOVANIE:      [cesta]\tlink /l/i/v subor.obj
 ;POMOCNE PROGRAMY:[cesta]\thelp\help.exe, abshelp.exe
@@ -36,8 +37,8 @@ DATA	SEGMENT
 		    	    DB TAB,'1. Nacitat subor',NEWL
 		    		  DB TAB,'2. Vypisat obsah suboru',NEWL
         		  DB TAB,'3. Pozicia maximalneho znaku v subore',NEWL
-        		  DB TAB,'4. Zmazat obrazovku a vypisat menu',NEWL,'$'
-              DB TAB,'[ESC,ENTER pre vypnutie programu',NEWL,'$'
+        		  DB TAB,'4. Zmazat obrazovku a vypisat menu',NEWL
+              DB TAB,'[ESC,ENTER] pre vypnutie programu',NEWL,'$'
     UNKNWN    DB 'Neznamy prikaz',NEWL,'$'
 
     ;messages
@@ -99,18 +100,18 @@ ASSUME CS:CODE,DS:DATA,SS:ZAS  ;makro na vycistenie obrazovky aka clrscr
 		ret	
 	endp CHARS
 
-  OCC proc
+  OCC proc   ;procedura na zistenie miesta max znaku
     mov D,0
-    mov POS,0
+    mov POS,0        ;init
     mov MAX_VAL, 0
     mov MAX_POS, 0
   
     PRINT NEWLINE
-    mov AX,HANDLE
+    mov AX,HANDLE   ;ak nemam handle, treba ho najprv nacitat
     cmp AX,0
     jnz go_on1
     PRINT ERR_NO_HANDLE
-    ret
+    ret             ;ak bola chyba koncim
     
 go_on1:
     mov ah, 42h ;nastavim sa na zaciatok suboru
@@ -126,15 +127,13 @@ cont1:         ;pokracujem citanie
     lea DX, BUFFER
     int 21h        ;precitam 99bajtov do bufferu
     
-    push bx ;schovam bx nakonci vytiahnem
-    
     cmp ax,cx ;porovnam kolko ancital
     jne end_read1; ak sa nerovnaju uz som docital
-    push ax
+    push ax   ;schovam si hodnoty a po porovnavani max znakov to popnem
     push bx
     push dx
 
-    mov D,0
+    mov D,0   ;v nacitanom bufferi ideme od 1
 loo:
     ;prejdi buffer
     lea di, buffer
@@ -151,17 +150,17 @@ next:
     MOV BX, D			;zistujem ci uz som na konci obsahu suboru
 		CMP BX,99
 		JNG loo
-    pop dx
+    pop dx       ;popnem hodnoty a pokracujem v cykle citania
     pop bx
     pop ax
     jmp cont1
        
-end_read1:
-    push ax
+end_read1:  ;ak som nacital menej ako 99B tak idem sem (koniec suboru)
+    push ax ;schovam hodnoty a idem citat posledny usek 
     push bx
     push dx
 
-    mov D,0
+    mov D,0   ;to iste ako v cykle loo
 loo2:
     ;prejdi buffer
     lea di, buffer
@@ -178,7 +177,7 @@ next2:
     MOV BX, D			;zistujem ci uz som na konci obsahu suboru
 		CMP BX,CX
 		JNG loo2
-    pop dx
+    pop dx  ;hodnoty popnem aby som mohol ist dalej
     pop bx
     pop ax
     ret
@@ -220,9 +219,9 @@ next2:
     ;nacitanie programu
     MOV AX, SEG DATA
 		MOV DS, AX
-clear:
-    CLRSCR   
+clear:      
 vyp_menu:
+    CLRSCR
     PRINT MENU
 select:
 		mov  ah,1
@@ -268,6 +267,7 @@ output_file:
     cmp AX,0
     jnz go_on
     PRINT ERR_NO_HANDLE
+    call wait_for
     jmp vyp_menu
  
 go_on:
@@ -312,11 +312,12 @@ load_file:
     PRINT NEWLINE
     mov ax,handle
     cmp ax, 0
-    jz empty_handle
+    jz empty_handle ;ak mam handle trea ho zavriet, ak nemam tak idem rovno nacitavat
     mov bx, ax  ;nacitam filehandle
     mov ah, 3Eh ;fcia na zavretie handle
     int 21h
-empty_handle:   
+empty_handle:
+    PRINT MSG_FILE_NAME   
     call READNAME
     cmp AH,0
     jz  nenacitane
@@ -334,7 +335,7 @@ empty_handle:
 nenacitane:
     PRINT NEWLINE
     PRINT ERROR
-    call WAITING
+    call WAIT_FOR
     jmp vyp_menu
     
 file_err:
@@ -353,9 +354,6 @@ quit:
     mov bx, ax  ;nacitam filehandle
     mov ah, 3Eh ;fcia na zavretie handle
     int 21h
-    PRINT TESTFILE
-    PRINT NEWLINE
-    PRINT FILENAME
 final:
     mov AH, 4CH
 		int 21H
