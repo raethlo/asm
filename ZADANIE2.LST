@@ -1,0 +1,427 @@
+Turbo Assembler	 Version 3.2	    04/23/14 19:32:24	    Page 1
+zadanie2.asm
+
+
+
+      1				     ;AUTOR : Roman Roštar
+      2				     ;Asemblery	- zadanie 2
+      3
+      4				     ;Napíšte program (v JSI), ktorý umožní používate¾ovi zada	dve èíselné hodnoty.
+      5				     ;Program musí obsahova procedúru,	ktorá tieto dve	èísla vynásobí.	Procedúra musí
+      6				     ;ma dva vstupné argumenty	odovzdávané cez	zásobník, prièom k nim bude pristupova
+      7				     ;štandardným spôsobom pomocou BP registra a výsledok vráti	v akumulátore. V prípade,
+      8				     ;že súèin je väèší	než najväèší možný vstupný operand (vzh¾adom na	poèet bitov),
+      9				     ;procedúra	sa po skonèení inštrukciou RET musí vráti na iné miesto, než z	ktorého	bola
+     10				     ;zavolaná inštrukciou CALL	(napr. za výpis	nasledujúci po CALL). Potrebné hodnoty pre
+     11				     ;zmenu návratovej adresy môžete zisti napríklad pomocou debugger-a.
+     12				     ;Program musí obsahova vhodné výpisy, aby	bolo možné demonštrova	jeho funkènos.
+     13				     ;Program musí umožòova opakované zadávanie èísiel. Navrhnite vhodnú ukonèovaciu podmienku
+     14
+     15	0000			     ZAS   SEGMENT stack	;zasobnikovy SEGMENT
+     16	0000  64*(????)			     dw	     100 dup (?)     ;zasobnik 200B
+     17	00C8			     dno     label   word
+     18	00C8			     ZAS   ends
+     19
+     20	0000			     data    SEGMENT		     ;datovy SEGMENT
+     21
+     22					     ;buffer na	nacitavanie RETazca
+     23	0000  10			     buffer  db	     16		      ;velkost buffer
+     24	0001  00			     charcnt db	     0		     ;tu bude pocet nacitanych znakov
+     25	0002  10*(00)			     bufdata db	     16	DUP(0)	      ;buffer
+     26	0012  0000			     num1    dw	       0
+     27	0014  0000					 num2	 dw	 0
+     28	0016  00					 dlzka	 DB	 0
+     29
+     30	      =	13,10			     NEWL EQU 13,10
+     31	      =0009			     TAB  EQU 9
+     32	0017  0D 0A 24			     NEWLINE  DB NEWL,'$'
+     33
+     34					 ;menu
+     35	001A  0D 0A				     HLAVA   DB	     '',NEWL
+     36	001C  41 73 65 6D 62 6C	65+				     DB	     'Asemblery	- Zadanie 2,',NEWL
+     37	      72 79 20 2D 20 5A	61+
+     38	      64 61 6E 69 65 20	32+
+     39	      2C 0D 0A
+     40	0034  61 75 74 6F 72 3A	20+	     DB	 'autor: Roman Rostar',NEWL
+     41	      52 6F 6D 61 6E 20	52+
+     42	      6F 73 74 61 72 0D	0A
+     43	0049  4E 61 73 6F 62 65	6E+				     DB	     'Nasobenie	dvoch cisel',NEWL, '$'
+     44	      69 65 20 64 76 6F	63+
+     45	      68 20 63 69 73 65	6C+
+     46	      0D 0A 24
+     47	0061  09 28 45 4E 54 45	52+				     DB	     TAB,'(ENTER) Zacni	nasobit', NEWL
+     48	      29 20 5A 61 63 6E	69+
+     49	      20 6E 61 73 6F 62	69+
+     50	      74 0D 0A
+     51	0079  09 28 45 53 43 29	20+	     DB	     TAB,'(ESC)	Ukonci program ', NEWL
+     52	      55 6B 6F 6E 63 69	20+
+     53	      70 72 6F 67 72 61	6D+
+     54	      20 0D 0A
+     55
+     56	0091  20 2A 20 24		 KRAT  DB  ' * $'
+     57	0095  20 3D 20 24		 ROVN  DB  ' = $'
+Turbo Assembler	 Version 3.2	    04/23/14 19:32:24	    Page 2
+zadanie2.asm
+
+
+
+     58	0099  28 45 4E 54 45 52	20+		     MSG_RET	     DB		 '(ENTER - nasobenie, ESC - koniec)',NEWL,'$'
+     59	      2D 20 6E 61 73 6F	62+
+     60	      65 6E 69 65 2C 20	45+
+     61	      53 43 20 2D 20 6B	6F+
+     62	      6E 69 65 63 29 0D	0A+
+     63	      24
+     64	00BD  5A 61 64 61 6A 74	65+	 MSG_NUM   DB	   'Zadajte cislo: $'
+     65	      20 63 69 73 6C 6F	3A+
+     66	      20 24
+     67					 ;MSG_OK    DB	    'Nasobenie ok, standard RET',NEWL,'$'
+     68	00CD  56 79 73 6C 65 64	6F+		     MSG_RES   DB      'Vysledok je:',NEWL, '$'
+     69	      6B 20 6A 65 3A 0D	0A+
+     70	      24
+     71
+     72	00DC  45 52 52 4F 52 3A	20+	 MSG_ERR_OF    DB      'ERROR: Nastalo pretecenie registra',NEWL, '$'
+     73	      4E 61 73 74 61 6C	6F+
+     74	      20 70 72 65 74 65	63+
+     75	      65 6E 69 65 20 72	65+
+     76	      67 69 73 74 72 61	0D+
+     77	      0A 24
+     78	0101  45 52 52 4F 52 3A	20+	 MSG_ERR_LOAD  DB      'ERROR: Zadany retazec nie je cislo',NEWL, '$'
+     79	      5A 61 64 61 6E 79	20+
+     80	      72 65 74 61 7A 65	63+
+     81	      20 6E 69 65 20 6A	65+
+     82	      20 63 69 73 6C 6F	0D+
+     83	      0A 24
+     84
+     85	0126  00			 dec_length	     db	     0
+     86
+     87	0127			     data    ends
+     88
+     89				     include makra.asm
+1    90				       ;makro na vycistenie obrazovky aka clrscr
+1    91				       CLRSCR  macro
+1    92					       mov AX,3
+1    93					       int 10H
+1    94				       endm
+1    95
+1    96				       ;makro s	parametrom na vypis retazca
+1    97				       PRINT macro TEXT
+1    98					 mov ah,9
+1    99					 mov dx,offset TEXT
+1   100					 int 21h
+1   101				       endm
+    102
+    103	0000			     code    SEGMENT
+    104					     assume  cs: code, ds: data, ss : ZAS
+    105				       ;-------------------------------------
+    106	0000			       WAIT_FOR	proc
+    107	0000				 waiting:
+    108						     PRINT MSG_RET
+1   109	0000  B4 09			 mov ah,9
+1   110	0002  BA 0099r			 mov dx,offset MSG_RET
+1   111	0005  CD 21			 int 21h
+    112	0007  B4 08			   mov AH, 8	     ; nacitanie znaku
+    113	0009  CD 21					     int 21H
+    114	000B  3C 0D					     cmp AL, 13		     ;Porovnaj ci bol stlaceny enter
+Turbo Assembler	 Version 3.2	    04/23/14 19:32:24	    Page 3
+zadanie2.asm
+
+
+
+    115	000D  E0 F1				     loopne waiting
+    116	000F  C3				     ret
+    117	0010				     endp
+    118				       ;-------------------------------------
+    119
+    120				       ;-------------------------------------
+    121				       ;procedura, predpoklada,	ze  v bx je cislo, ktore sa bude prevadzat
+    122	0010			       PREVOD proc			     ; prevod z	bytov do dekadickeho cisla
+    123	0010  C6 06 0126r 00			     mov dec_length, 0	     ;dlzka decimalneho	cisla =	pocet cifier zatial 0
+    124	0015				     DEC_DIVISION:
+    125	0015  33 D2				     xor dx, dx			     ;uvodny xor
+    126	0017  B9 000A				     mov cx, 10
+    127
+    128	001A  8B C3				     mov ax, bx			  ;do ax nacitame nase cislo
+    129	001C  F7 F1				     div cx			    ;predelime desiatmi
+    130	001E  8B D8				     mov bx, ax			 ;do bx	skopirujeme obsah ax, tj predelene cislo
+    131	0020  52				     push dx			   ;do dx hodime cifru
+    132	0021  FE 06 0126r			     inc dec_length	     ;pridame jednu cifru
+    133	0025  83 FB 00				     cmp bx, 0				 ;skontrolujeme	ci este	mame cifry v bx
+    134	0028  74 02				     jz	DEC_PRINT
+    135	002A  EB E9				     jmp DEC_DIVISION
+    136
+    137	002C				     DEC_PRINT:		      ;vypisanie dekadickeho cisla
+    138	002C  5A				     pop dx		    ;cifru vytiahneme z	dx
+    139	002D  83 C2 30				     add dx, 30h      ;posun na	zaciatok cisel
+    140	0030  B4 02				     mov ah, 02h		      ;funkcia na print	cisla
+    141	0032  CD 21				     int 21h
+    142	0034  FE 0E 0126r			     dec dec_length	     ; posun o cifru dalej
+    143	0038  80 3E 0126r 00			     cmp dec_length, 0
+    144	003D  74 02				     jz	 navrat	;uz sme	vypisali cele cislo
+    145	003F  EB EB				     jmp DEC_PRINT
+    146	0041				     navrat:
+    147	0041  C3				     ret
+    148	0042				     endp PREVOD
+    149				       ;-------------------------------------
+    150
+    151				       ;-------------------------------------
+    152				       ;procedura na nacitanie cisla - cislo odovzda v AX
+    153	0042			       LOAD_NUM	proc NEAR
+    154					 ;nacita retazec do bufferu
+    155	0042  B4 0A			 MOV AH, 0AH
+    156	0044  BA 0000r			 MOV DX, OFFSET	buffer
+    157	0047  CD 21			 INT 21h
+    158
+    159	0049  33 C0			 XOR AX, AX		     ;premaze
+    160	004B  BE 0002r			 MOV SI, OFFSET	bufdata	     ;nacita sa	adresa prveho znaku
+    161	004E  B9 000A			 MOV CX, 10		     ;zaklad sustavy
+    162	0051			     load_prevod:
+    163	0051  8A 1C			 MOV BL, DS:[SI]	     ;nacita byte z adresy v reg. SI
+    164	0053  46			 INC SI			     ;posun na adresu dalsieho znaku
+    165
+    166					 ;porovnaj ci znak je cislica
+    167	0054  80 FB 30			 CMP BL, '0'
+    168	0057  72 05			       JB  load_err
+    169					 ;ak je	to okej	pokracuj, inak to prejde na error
+    170	0059  80 FB 39			 CMP BL, '9'
+    171	005C  76 0E			 JNA  load_cnt
+Turbo Assembler	 Version 3.2	    04/23/14 19:32:24	    Page 4
+zadanie2.asm
+
+
+
+    172	005E			     load_err:
+    173					     ;ak nie je	znak nastavim carry a koncim
+    174					     ;ak to vsak bol enter, resp newline, tak to
+    175					     ;je iba koniec riadku a je	to vporiadku, vtedy
+    176					     ;len skoncim
+    177	005E  80 FB 0D			     cmp bl,13
+    178	0061  74 14			     je	load_ends
+    179	0063  80 FB 0A			     cmp bl,10
+    180	0066  74 0F			     je	load_ends
+    181
+    182	0068  F9			     stc
+    183	0069  EB 0C 90			     jmp load_ends
+    184	006C			     load_cnt:
+    185					 ;prida	cislicu	k doposial spracovanim cifram cisla
+    186	006C  80 EB 30			 SUB BL, '0'		     ;znak -> cislo
+    187	006F  32 FF			 XOR BH, BH		     ;nuluje horny byte	registra BX
+    188	0071  F7 E1			 MUL CX			     ;DX:AX = AX * CX (t.j AX =	AX * 10)
+    189
+    190	0073  03 C3			 ADD AX, BX		     ;prida sa nova cifra
+    191	0075  EB DA			 JMP load_prevod
+    192	0077			     load_ends:
+    193	0077  C3			     RET
+    194	0078			     LOAD_NUM endp
+    195				     ;-------------------------------------
+    196
+    197				     ;-------------------------------------
+    198				     ;Procedura	na vynasobenie dvoch cisel
+    199				     ;ocakava dve cisla	ako argumenty
+    200				     ;navratova	hodnota	sa nachadza v ax
+    201	0078			     MULTIPLY proc near
+    202	0078  55		       push  bp
+    203	0079  8B EC		       mov   bp, sp
+    204	007B  8B 46 06		       mov   ax, [bp + 6]
+    205	007E  8B 5E 04		       mov   bx, [bp + 4]
+    206	0081  8B C8		       mov   cx, ax
+    207				       ;xor   bx, ax
+    208	0083  33 C0		       xor   ax, ax
+    209
+    210	0085			     mul_work:
+    211	0085  03 C3		       add  AX,	BX
+    212	0087  72 05		       jc   mul_err
+    213				       ;jo   mul_err
+    214	0089  E2 FA		       loop mul_work
+    215	008B  EB 09 90		       jmp  mul_end
+    216	008E			     mul_err:
+    217	008E  B8 0001		       mov   ax, 1
+    218	0091  C7 46 02 0129r	       mov   word ptr [bp + 2],	offset err_of
+    219	0096			     mul_end:
+    220	0096  5D		       pop   bp
+    221	0097  C3		       ret
+    222	0098			     MULTIPLY endp
+    223				     ;-------------------------------------
+    224
+    225	0098			       START:
+    226					 ;nacitanie programu
+    227	0098  B8 0000s			 MOV   AX, SEG DATA
+    228	009B  8E D8				     MOV   DS, AX
+Turbo Assembler	 Version 3.2	    04/23/14 19:32:24	    Page 5
+zadanie2.asm
+
+
+
+    229	009D  B8 0000s			 MOV	     AX, SEG ZAS
+    230	00A0  8E D0			 MOV	     SS, AX
+    231	00A2  BC 00C8r			 MOV   SP, OFFSET DNO
+    232
+    233					 PRINT HLAVA
+1   234	00A5  B4 09			 mov ah,9
+1   235	00A7  BA 001Ar			 mov dx,offset HLAVA
+1   236	00AA  CD 21			 int 21h
+    237	00AC  EB 5C 90			 JMP ask
+    238	00AF			     work:
+    239					 ;nacitanie cisel
+    240					 PRINT MSG_NUM
+1   241	00AF  B4 09			 mov ah,9
+1   242	00B1  BA 00BDr			 mov dx,offset MSG_NUM
+1   243	00B4  CD 21			 int 21h
+    244	00B6  E8 FF89			 call  LOAD_NUM
+    245	00B9  72 64			 jc    err_load
+    246	00BB  50			 push  AX
+    247	00BC  A3 0012r			 mov   num1, ax
+    248					 PRINT NEWLINE
+1   249	00BF  B4 09			 mov ah,9
+1   250	00C1  BA 0017r			 mov dx,offset NEWLINE
+1   251	00C4  CD 21			 int 21h
+    252
+    253					 PRINT MSG_NUM
+1   254	00C6  B4 09			 mov ah,9
+1   255	00C8  BA 00BDr			 mov dx,offset MSG_NUM
+1   256	00CB  CD 21			 int 21h
+    257	00CD  E8 FF72			 call  LOAD_NUM
+    258	00D0  72 4D			 jc    err_load
+    259	00D2  50			 push  AX
+    260	00D3  A3 0014r			 mov   num2, ax
+    261					 PRINT NEWLINE
+1   262	00D6  B4 09			 mov ah,9
+1   263	00D8  BA 0017r			 mov dx,offset NEWLINE
+1   264	00DB  CD 21			 int 21h
+    265
+    266
+    267	00DD  E8 FF98			 call  multiply
+    268	00E0  50			 push ax
+    269
+    270					 ; vypisanie vysledku a	nasobenies
+    271	00E1  8B 1E 0012r		 mov   bx, num1
+    272	00E5  E8 FF28			 call  prevod
+    273					 PRINT KRAT
+1   274	00E8  B4 09			 mov ah,9
+1   275	00EA  BA 0091r			 mov dx,offset KRAT
+1   276	00ED  CD 21			 int 21h
+    277	00EF  8B 1E 0014r		 mov   bx, num2
+    278	00F3  E8 FF1A			 call  prevod
+    279					 PRINT ROVN
+1   280	00F6  B4 09			 mov ah,9
+1   281	00F8  BA 0095r			 mov dx,offset ROVN
+1   282	00FB  CD 21			 int 21h
+    283
+    284	00FD  58			 pop   ax
+    285
+Turbo Assembler	 Version 3.2	    04/23/14 19:32:24	    Page 6
+zadanie2.asm
+
+
+
+    286	00FE  8B D8			 mov   bx,ax
+    287	0100  E8 FF0D			 call  prevod
+    288					 PRINT NEWLINE
+1   289	0103  B4 09			 mov ah,9
+1   290	0105  BA 0017r			 mov dx,offset NEWLINE
+1   291	0108  CD 21			 int 21h
+    292	010A			     ask:
+    293					 PRINT MSG_RET
+1   294	010A  B4 09			 mov ah,9
+1   295	010C  BA 0099r			 mov dx,offset MSG_RET
+1   296	010F  CD 21			 int 21h
+    297	0111  B4 08			 mov AH, 8	     ; nacitanie znaku
+    298	0113  CD 21				     int 21H
+    299	0115  3C 0D			 cmp al, 13
+    300	0117  74 96			 je  work
+    301	0119  3C 1B			 cmp al, 27
+    302	011B  74 16			 je  final
+    303	011D  EB EB			 jmp ask
+    304
+    305	011F			     err_load:
+    306					 PRINT MSG_ERR_LOAD
+1   307	011F  B4 09			 mov ah,9
+1   308	0121  BA 0101r			 mov dx,offset MSG_ERR_LOAD
+1   309	0124  CD 21			 int 21h
+    310	0126  F8			 CLC
+    311	0127  EB 86			 jmp work
+    312
+    313	0129			     err_of:
+    314					 PRINT MSG_ERR_OF
+1   315	0129  B4 09			 mov ah,9
+1   316	012B  BA 00DCr			 mov dx,offset MSG_ERR_OF
+1   317	012E  CD 21			 int 21h
+    318	0130  E9 FF7C			 jmp work
+    319	0133			     final:
+    320	0133  B4 4C			 mov AH, 4CH
+    321	0135  CD 21				     int 21H
+    322
+    323	0137			       CODE ENDS
+    324				       END START
+Turbo Assembler	 Version 3.2	    04/23/14 19:32:24	    Page 7
+Symbol Table
+
+
+
+
+Symbol Name		Type   Value			   Cref	(defined at #)
+
+??DATE			Text   "04/23/14"
+??FILENAME		Text   "zadanie2"
+??TIME			Text   "19:32:23"
+??VERSION		Number 0314
+@CPU			Text   0101H
+@CURSEG			Text   CODE			   #15	#20  #103
+@FILENAME		Text   ZADANIE2
+@WORDSIZE		Text   2			   #15	#20  #103
+ASK			Near   CODE:010A		   237	#292  303
+BUFDATA			Byte   DATA:0002		   #25	160
+BUFFER			Byte   DATA:0000		   #23	156
+CHARCNT			Byte   DATA:0001		   #24
+DEC_DIVISION		Near   CODE:0015		   #124	 135
+DEC_LENGTH		Byte   DATA:0126		   #85	123  132  142  143
+DEC_PRINT		Near   CODE:002C		   134	#137  145
+DLZKA			Byte   DATA:0016		   #28
+DNO			Word   ZAS:00C8			   #17	231
+ERR_LOAD		Near   CODE:011F		   245	258  #305
+ERR_OF			Near   CODE:0129		   218	#313
+FINAL			Near   CODE:0133		   302	#319
+HLAVA			Byte   DATA:001A		   #35	235
+KRAT			Byte   DATA:0091		   #56	275
+LOAD_CNT		Near   CODE:006C		   171	#184
+LOAD_ENDS		Near   CODE:0077		   178	180  183  #192
+LOAD_ERR		Near   CODE:005E		   168	#172
+LOAD_NUM		Near   CODE:0042		   #153	 244  257
+LOAD_PREVOD		Near   CODE:0051		   #162	 191
+MSG_ERR_LOAD		Byte   DATA:0101		   #78	308
+MSG_ERR_OF		Byte   DATA:00DC		   #72	316
+MSG_NUM			Byte   DATA:00BD		   #64	242  255
+MSG_RES			Byte   DATA:00CD		   #68
+MSG_RET			Byte   DATA:0099		   #58	110  295
+MULTIPLY		Near   CODE:0078		   #201	 267
+MUL_END			Near   CODE:0096		   215	#219
+MUL_ERR			Near   CODE:008E		   212	#216
+MUL_WORK		Near   CODE:0085		   #210	 214
+NAVRAT			Near   CODE:0041		   144	#146
+NEWL			Text   13,10			   #30	32  35	36  40	43  47	51  58	68  72	78
+NEWLINE			Byte   DATA:0017		   #32	250  263  290
+NUM1			Word   DATA:0012		   #26	247  271
+NUM2			Word   DATA:0014		   #27	260  277
+PREVOD			Near   CODE:0010		   #122	 272  278  287
+ROVN			Byte   DATA:0095		   #57	281
+START			Near   CODE:0098		   #225	 324
+TAB			Number 0009			   #31	47  51
+WAITING			Near   CODE:0000		   #107	 115
+WAIT_FOR		Near   CODE:0000		   #106
+WORK			Near   CODE:00AF		   #238	 300  311  318
+
+Macro Name						   Cref	(defined at #)
+
+CLRSCR							   #91
+PRINT							   #97	108  233  240  248  253	 261  273  279	288  293  306  314
+Turbo Assembler	 Version 3.2	    04/23/14 19:32:24	    Page 8
+Symbol Table
+
+
+
+
+Groups & Segments	Bit Size Align	Combine	Class	   Cref	(defined at #)
+
+CODE			16  0137 Para	none		   #103	 104
+DATA			16  0127 Para	none		   #20	104  227
+ZAS			16  00C8 Para	Stack		   #15	104  229
+
